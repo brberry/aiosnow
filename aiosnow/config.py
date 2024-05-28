@@ -62,11 +62,12 @@ class ClientConfig(BaseConfigSchema):
 
     @post_load
     def make_object(self, data: dict, **_: Any) -> Any:
-        if {"basic_auth", "oauth"} <= set(data):
+        # if {"basic_auth", "oauth"} <= set(data):
+        if data.get("basic_auth") and data.get("oauth"):
             raise AmbiguousClientAuthentication(
                 "Cannot use multiple authentication methods"
             )
-        elif data.get("basic_auth"):
+        elif data.get("basic_auth") or data.get("oauth"):
             pass
         else:
             raise MissingClientAuthentication(

@@ -36,3 +36,36 @@ black = { version = "^19.3b0", allow-prereleases = true }
 [build-system]
 requires = ["poetry>=0.12"]
 build-backend = "poetry.masonry.api"
+
+[tool.ruff]
+src = ["aiosnow/"]
+force-exclude = true
+line-length = 120
+show-fixes = true
+
+[tool.ruff.lint]
+extend-select = ["A","B", "C4", "E", "F", "I", "PGH004", "PTH", "Q", "RET", "S", "SIM", "TCH", "UP", "W", "YTT"]
+# A002: Argument `xxxx` is shadowing a Python builtin
+# S104: Possible binding to all interfaces (totally bogus - it sees a string '0.0.0.0' and thinks
+#       it's an IP address)
+# SIM102: Use a single `if` statement instead of nested `if` statements (their suggestions make for
+#         very unreadable code)
+ignore = ["A002", "S104", "SIM102"]
+pydocstyle = { convention = 'google' }
+
+#[tool.ruff.lint.per-file-ignores]
+#"main.py" = [
+#    "E402", # Module level import not at top of file
+#    "S301", # Pickles can be dangerous
+#]
+
+[tool.ruff.lint.isort]
+#known-third-party = [
+#    "asyncclick",
+#    "aiofiles",
+#    "aiosalesforce",
+#    "loguru",
+#    "nist_sf"
+#]
+known-local-folder = ["aiosnow"]
+
