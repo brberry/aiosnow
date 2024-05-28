@@ -21,14 +21,20 @@ class CustomBaseModel(TableModel):
 
     async def _get_token(self, refresh: bool = False) -> None:
         session = cast(CustomClientSession, self._session)
-        oauth = session._config.session.oauth
+        if not session._config:
+            raise ValueError("config not set")
+        if not session._config.session:
+            raise ValueError("session not set in config")
+        oauth: dict = session._config.session.oauth  # type: ignore[assignment]
         priv_key = Path(oauth["key_file"]).read_bytes()
         if oauth.get("key_passphrase"):
             from cryptography.hazmat.backends import default_backend
             from cryptography.hazmat.primitives import serialization
 
             private_key = serialization.load_pem_private_key(
-                priv_key, password=bytes(oauth.get("key_passphrase"), "utf-8"), backend=default_backend()
+                priv_key,
+                password=bytes(oauth.get("key_passphrase"), "utf-8"),  # type: ignore[arg-type]
+                backend=default_backend(),
             )
         else:
             private_key = priv_key  # type: ignore[assignment]
