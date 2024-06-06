@@ -32,6 +32,17 @@ class SysEventModel(CustomBaseModel):
     sys_updated_by = fields.String()
     sys_updated_on = fields.DateTime()
 
+
+class ImportModel(CustomBaseModel):
+    sys_id = fields.String(is_primary=True)
+    level = fields.String()
+    message = fields.String()
+    source = fields.String()
+    sys_class_name = fields.String()
+    sys_created_by = fields.String()
+    sys_created_on = fields.DateTime()
+
+
 instance_url = "nistsandbox2.servicenowservices.com"
 
 oauth = {
@@ -51,28 +62,52 @@ async def main() -> None:
     #
     #     response = await user.get_one(UserModel.user_name == "brberry")
     #     print("({sys_id}): {user_name} {email}".format(**response.data))
-    date_str = "2024-05-28 13:00:00"
+    date_str = "2024-05-20 00:00:00"
     query_dt = query_date(date_str)
 
     query = select(
-        SysEventModel.sys_created_on.after(query_dt)
-    ).order_asc(SysEventModel.sys_created_on)
+        ImportModel.sys_created_on.after(query_dt)
+    ).order_asc(ImportModel.sys_created_on)
 
-    async with SysEventModel(client, table_name="sysevent") as api:
+    print("Start...")
+    async with ImportModel(client, table_name="import_log") as api:
+        # print(await api.count(query))
+        limit = 10000
         offset = 0
         rec_cnt = 0
-        batch_cnt = 0
-        limit = 5000
         while True:
             batch_cnt = 0
             for response in await api.get(query, limit=limit, offset=offset):
+                # print("{sys_id} : {source}({level}) {sys_class_name} {sys_created_on}".format(**response))
                 rec_cnt += 1
                 batch_cnt += 1
             offset += batch_cnt
-            print(f"Retrieved {rec_cnt} records so far")
+            # print(f"Retrieved {rec_cnt} records so far")
             if batch_cnt < limit:
                 break
+
+        print("Done!!")
         print(f"Retrieved {rec_cnt} records in total")
+
+    # query = select(
+    #     SysEventModel.sys_created_on.after(query_dt)
+    # ).order_asc(SysEventModel.sys_created_on)
+
+    # async with SysEventModel(client, table_name="sysevent") as api:
+    #     print(await api.count(query))
+
+        # while True:
+        #     batch_cnt = 0
+        #     for response in await api.count(query):
+        #         print(response)
+        #         rec_cnt += 1
+        #         batch_cnt += 1
+        #     offset += batch_cnt
+        #     print(f"Retrieved {rec_cnt} records so far")
+        #     if batch_cnt < limit:
+        #         break
+        #     break
+        # print(f"Retrieved {rec_cnt} records in total")
 
     # async with SysEventModel(client, table_name="sysevent") as sys_event:
     #     response = await sys_event.get_one(UserModel.user_name == "brb5150")

@@ -17,6 +17,7 @@ class GetRequest(BaseRequest):
         limit: int = 10000,
         offset: int = 0,
         query: str = None,
+        count: bool = False,
         cache_secs: int = 20,
         **kwargs: Any,
     ):
@@ -24,6 +25,7 @@ class GetRequest(BaseRequest):
         self._cache_secs = cache_secs
         self._limit = offset + limit
         self._offset = offset
+        self._count = count
         self.query = query
         super(GetRequest, self).__init__(*args, **kwargs)
 
@@ -40,6 +42,10 @@ class GetRequest(BaseRequest):
     @property
     def limit(self) -> int:
         return self._limit
+
+    @property
+    def count(self) -> str:
+        return str(self._count).lower()
 
     def _nested_with_path(self, fields: dict, path_base: list) -> Generator:
         path = path_base or []
@@ -116,6 +122,15 @@ class GetRequest(BaseRequest):
 
     @property
     def params(self) -> dict:
+        if self.count == "true":
+            return dict(
+                # sysparm_offset=self.offset,
+                # sysparm_limit=self.limit,
+                sysparm_count=self.count,
+                sysparm_query=self.query,
+                **super().params,
+            )
+
         return dict(
             sysparm_offset=self.offset,
             sysparm_limit=self.limit,

@@ -1,4 +1,5 @@
 import time
+import typing
 import uuid
 from pathlib import Path
 from typing import Any, cast
@@ -8,10 +9,15 @@ from yarl import URL
 
 from aiosnow import TableModel
 from aiosnow.custom_session import CustomClientSession
-from aiosnow.request import Response
+from aiosnow.query import Condition, Selector, select
+from aiosnow.request import Response, methods
 
 
 class CustomBaseModel(TableModel):
+    @property
+    def _stats_url(self) -> Any:
+        return f"{self._client.base_url}/api/now/stats/{self._table_name}"
+
     async def request(self, method: str, *args: Any, **kwargs: Any) -> Response:
         if "Authorization" not in self._session.headers:
             await self._get_token()
@@ -79,3 +85,36 @@ class CustomBaseModel(TableModel):
         self._session_id = self._token.get("access_token", None)
         self._session.headers["Authorization"] = f"Bearer {self._session_id}"
         # print(f"Set Authorization to {self._session.headers['Authorization']}")
+
+    async def count(self, selection: Selector | Condition | str, **kwargs: Any) -> int:
+        """Buffered many
+
+        Fetch and store the entire result in memory.
+
+        Note: It's recommended to use the stream method when dealing with a
+        large number of records.
+
+        Keyword Args:
+            selection: Aiosnow-compatible query
+            limit (int): Maximum number of records to return
+            offset (int): Starting record index
+
+        Returns:
+            count (int) of query results
+            -1 if not found
+        """
+
+        response = await self.request(
+            methods.GET,
+            query=select(selection).sysparms,
+            nested_fields=self._nested_fields,
+            resolve=True,
+            url=self._stats_url,
+            count=True,
+            decode=False,
+            **kwargs,
+        )
+        await response.load_document()
+        if typing.TYPE_CHECKING:
+            assert isinstance(response.data, dict)
+        return response.data.get("stats", {}).get("count", -1)
