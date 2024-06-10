@@ -66,6 +66,7 @@ class CustomBaseModel(TableModel):
         headers = {
             "Content-Type": "application/x-www-form-urlencoded",
             "Cache-Control": "no-cache",
+            "User-Agent": "aiosnow_custom",
         }
         token_url = URL(f"https://{session._config.address}") / "oauth_token.do"
 
